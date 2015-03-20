@@ -40,7 +40,7 @@ public class BronKerbosch {
 
     public static Set<Set<Integer>> maxCliques(WeightedUndirectedGraph g) {
         long time = System.currentTimeMillis();
-        Set<Set<Integer>> cliques = new HashSet();
+        Set<Set<Integer>> cliques = new HashSet<Set<Integer>>();
         ArrayList<Integer> candidates = new ArrayList<Integer>();
         for (int i = 0; i < g.out.length; i++) {
             if (g.out[i] != null && g.out[i].length > 0) {

@@ -75,22 +75,4 @@ public class DoubleValues implements Indexable {
     public int getIndex() {
         return this.index;
     }
-
-    public static void main(String[] args) {
-        ArrayList<DoubleValues> list = new ArrayList<DoubleValues>();
-
-        list.add(new DoubleValues(5, 2.5));
-
-        list.add(new DoubleValues(0, 4.5));
-        list.add(new DoubleValues(3, 4.5));
-        list.add(new DoubleValues(2, 4.5));
-        list.add(new DoubleValues(4, 4.5));
-        list.add(new DoubleValues(6, 4.5));
-
-        list.add(new DoubleValues(1, 4.4));
-
-        Collections.sort(list);
-        
-        logger.info(list);
-    }
 }
