@@ -1,5 +1,27 @@
 package it.stilo.g.algo;
 
+/*
+ * #%L
+ * G
+ * %%
+ * Copyright (C) 2013 - 2015 Giovanni Stilo
+ * %%
+ * G is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this program.  If not, see
+ * <https://www.gnu.org/licenses/lgpl-3.0.txt>.
+ * #L%
+ */
+
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,15 +50,14 @@ public class HubnessAuthority implements Runnable {
     private int runner;
     private CountDownLatch authorityStep;
     private CountDownLatch hubnessStep;
-    private CountDownLatch aNormStep;
-    private CountDownLatch hNormStep;
+    private CountDownLatch normalizationStep;
     private double[] hub;
     private double[] auth;
     private AtomicDouble SHub;
     private AtomicDouble SAuth;
 
     private HubnessAuthority(WeightedGraph g,
-            CountDownLatch authority, CountDownLatch hubness, CountDownLatch aNormStep,CountDownLatch hNormStep,
+            CountDownLatch authority, CountDownLatch hubness, CountDownLatch normalizationStep,
             double[] countHub, double[] countAuth,
             AtomicDouble SHub, AtomicDouble SAuth,
             int chunk, int runner) {
@@ -45,8 +66,7 @@ public class HubnessAuthority implements Runnable {
         this.runner = runner;
         this.authorityStep = authority;
         this.hubnessStep = hubness;
-        this.aNormStep = aNormStep;
-        this.hNormStep = hNormStep;
+        this.normalizationStep = normalizationStep;
         this.hub = countHub;
         this.auth = countAuth;
         this.SHub = SHub;
@@ -78,22 +98,6 @@ public class HubnessAuthority implements Runnable {
             }
         }
         
-        {// Authority Normalization phase.
-            double normAuth = Math.sqrt(SAuth.doubleValue());
-
-            for (int j = chunk; j < g.size; j += runner) {
-                if (g.in[j] != null || g.out[j] != null) {
-                    auth[j] = auth[j] / normAuth;
-                }
-            }
-
-            aNormStep.countDown();
-            try {
-                aNormStep.await(); //Wait that every thread have finished Authority Normalization part.
-            } catch (InterruptedException ex) {
-                logger.debug(ex);
-            }
-        }
 
         {//Compute Hubness score part ( inlink )
             double sumHub = 0.0d;
@@ -120,16 +124,18 @@ public class HubnessAuthority implements Runnable {
             }
         }
 
-        {//Hubness Normalization phase.
+        {// Normalization phase.
+            double normAuth = Math.sqrt(SAuth.doubleValue());
             double normHub = Math.sqrt(SHub.doubleValue());
 
             for (int j = chunk; j < g.size; j += runner) {
                 if (g.in[j] != null || g.out[j] != null) {
+                    auth[j] = auth[j] / normAuth;
                     hub[j] = hub[j] / normHub;
                 }
             }
 
-            hNormStep.countDown();
+            normalizationStep.countDown();
         }
     }
 
@@ -157,19 +163,18 @@ public class HubnessAuthority implements Runnable {
             SHub.set(0.0);
             CountDownLatch authority = new CountDownLatch(runner);
             CountDownLatch hubness = new CountDownLatch(runner);
-            CountDownLatch aNormStep = new CountDownLatch(runner);
-            CountDownLatch hNormStep = new CountDownLatch(runner);
+            CountDownLatch normalizationStep = new CountDownLatch(runner);
 
             oldAuth = Arrays.copyOf(auth, auth.length);
 
             Thread[] workers = new Thread[runner];
             for (int i = 0; i < runner; i++) {
-                workers[i] = new Thread(new HubnessAuthority(g, authority, hubness, aNormStep,hNormStep, hub, auth, SHub, SAuth, i, runner),"" + i);
+                workers[i] = new Thread(new HubnessAuthority(g, authority, hubness, normalizationStep, hub, auth, SHub, SAuth, i, runner),"" + i);
                 workers[i].start();
             }
 
             try {
-                hNormStep.await();
+                normalizationStep.await();
             } catch (InterruptedException e) {
                 logger.debug(e);
             }
