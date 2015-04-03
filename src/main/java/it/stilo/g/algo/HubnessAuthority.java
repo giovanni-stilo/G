@@ -48,14 +48,15 @@ public class HubnessAuthority implements Runnable {
     private int runner;
     private CountDownLatch authorityStep;
     private CountDownLatch hubnessStep;
-    private CountDownLatch normalizationStep;
+    private CountDownLatch aNormStep;
+    private CountDownLatch hNormStep;
     private double[] hub;
     private double[] auth;
     private AtomicDouble SHub;
     private AtomicDouble SAuth;
 
     private HubnessAuthority(WeightedGraph g,
-            CountDownLatch authority, CountDownLatch hubness, CountDownLatch normalization,
+            CountDownLatch authority, CountDownLatch hubness, CountDownLatch aNormStep,CountDownLatch hNormStep,
             double[] countHub, double[] countAuth,
             AtomicDouble SHub, AtomicDouble SAuth,
             int chunk, int runner) {
@@ -64,7 +65,8 @@ public class HubnessAuthority implements Runnable {
         this.runner = runner;
         this.authorityStep = authority;
         this.hubnessStep = hubness;
-        this.normalizationStep = normalization;
+        this.aNormStep = aNormStep;
+        this.hNormStep = hNormStep;
         this.hub = countHub;
         this.auth = countAuth;
         this.SHub = SHub;
@@ -95,6 +97,23 @@ public class HubnessAuthority implements Runnable {
                 logger.debug(ex);
             }
         }
+        
+        {// Authority Normalization phase.
+            double normAuth = Math.sqrt(SAuth.doubleValue());
+
+            for (int j = chunk; j < g.size; j += runner) {
+                if (g.in[j] != null || g.out[j] != null) {
+                    auth[j] = auth[j] / normAuth;
+                }
+            }
+
+            aNormStep.countDown();
+            try {
+                aNormStep.await(); //Wait that every thread have finished Authority Normalization part.
+            } catch (InterruptedException ex) {
+                logger.debug(ex);
+            }
+        }
 
         {//Compute Hubness score part ( inlink )
             double sumHub = 0.0d;
@@ -121,18 +140,16 @@ public class HubnessAuthority implements Runnable {
             }
         }
 
-        {//Hubness & Authority Normalization phase.
-            double normAuth = Math.sqrt(SAuth.doubleValue());
+        {//Hubness Normalization phase.
             double normHub = Math.sqrt(SHub.doubleValue());
 
             for (int j = chunk; j < g.size; j += runner) {
                 if (g.in[j] != null || g.out[j] != null) {
-                    auth[j] = auth[j] / normAuth;
                     hub[j] = hub[j] / normHub;
                 }
             }
 
-            normalizationStep.countDown();
+            hNormStep.countDown();
         }
     }
 
@@ -160,18 +177,19 @@ public class HubnessAuthority implements Runnable {
             SHub.set(0.0);
             CountDownLatch authority = new CountDownLatch(runner);
             CountDownLatch hubness = new CountDownLatch(runner);
-            CountDownLatch normalization = new CountDownLatch(runner);
+            CountDownLatch aNormStep = new CountDownLatch(runner);
+            CountDownLatch hNormStep = new CountDownLatch(runner);
 
             oldAuth = Arrays.copyOf(auth, auth.length);
 
             Thread[] workers = new Thread[runner];
             for (int i = 0; i < runner; i++) {
-                workers[i] = new Thread(new HubnessAuthority(g, authority, hubness, normalization, hub, auth, SHub, SAuth, i, runner),"" + i);
+                workers[i] = new Thread(new HubnessAuthority(g, authority, hubness, aNormStep,hNormStep, hub, auth, SHub, SAuth, i, runner),"" + i);
                 workers[i].start();
             }
 
             try {
-                normalization.await();
+                hNormStep.await();
             } catch (InterruptedException e) {
                 logger.debug(e);
             }
