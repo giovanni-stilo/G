@@ -23,6 +23,7 @@ package it.stilo.g.util;
  */
 import it.stilo.g.structures.WeightedGraph;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -157,6 +158,47 @@ public class ArraysUtil {
         System.arraycopy(second, 0, result, first.length, second.length);
         return result;
     }
+    
+    public static long[] uniq(long[] a) {
+        if (a == null || a.length == 0) {
+            return a;
+        }
+
+        Arrays.sort(a);
+
+        long[] tmp = new long[a.length];
+
+        int j = 0;
+        tmp[0] = a[0];
+        for (int i = 0; i < a.length && j < tmp.length; i++) {
+            if (a[i] != tmp[j]) {
+                j++;
+                if (j < tmp.length) {
+                    tmp[j] = a[i];
+                }
+            }
+        }
+
+        return Arrays.copyOf(tmp, j + 1);
+    }
+
+    public static long[] concat(long[] first, long[] second) {
+        if (first == null && second == null) {
+            return new long[0];
+        }
+
+        if (first == null) {
+            return Arrays.copyOf(second, second.length);
+        }
+
+        if (second == null) {
+            return Arrays.copyOf(first, first.length);
+        }
+
+        long[] result = Arrays.copyOf(first, first.length + second.length);
+        System.arraycopy(second, 0, result, first.length, second.length);
+        return result;
+    }
 
     /**
      *
@@ -210,6 +252,37 @@ public class ArraysUtil {
 
     public static int[] intersection(int[] array1, int[] array2) {
         int[] intersection = new int[array1.length < array2.length ? array1.length : array2.length];
+        int k = 0;
+        if (array1.length > 0 && array2.length > 0) {
+            for (int i = 0, j = 0; i < array1.length && j < array2.length;) {
+
+                if (array1[i] == array2[j]) {
+                    intersection[k] = array1[i];
+                    k++;
+                    i++;
+                    j++;
+                }
+
+                if (j < array2.length && i < array1.length) {
+                    if (array2[j] < array1[i]) {
+                        j++;
+                    } else if (array2[j] > array1[i]) {
+                        i++;
+                    }
+                }
+
+            }
+        }
+
+        if (k < intersection.length) {
+            intersection = Arrays.copyOf(intersection, k);
+        }
+        return intersection;
+    }
+    
+    
+    public static long[] intersection(long[] array1, long[] array2) {
+        long[] intersection = new long[array1.length < array2.length ? array1.length : array2.length];
         int k = 0;
         if (array1.length > 0 && array2.length > 0) {
             for (int i = 0, j = 0; i < array1.length && j < array2.length;) {
@@ -339,10 +412,20 @@ public class ArraysUtil {
         return INDEX_NOT_FOUND;
     }
 
-    public static int[] toIntArray(Set<Integer> set) {
+  /*  public static int[] toIntArray(Set<Integer> set) {
         int[] ints = new int[set.size()];
         int index = 0;
         for (Integer i : set) {
+            ints[index++] = i;
+
+        }
+        return ints;
+    }*/
+    
+     public static int[] toIntArray(Collection<Integer> colls) {
+        int[] ints = new int[colls.size()];
+        int index = 0;
+        for (Integer i : colls) {
             ints[index++] = i;
 
         }

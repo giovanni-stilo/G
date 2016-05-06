@@ -41,9 +41,9 @@ import org.apache.logging.log4j.Logger;
  *
  * @author Di Tommaso, Stilo
  */
-public class HubnessAuthority implements Runnable {
+public class Leadership implements Runnable {
 
-    private static final Logger logger = LogManager.getLogger(HubnessAuthority.class);
+    private static final Logger logger = LogManager.getLogger(Leadership.class);
 
     private WeightedGraph g;
     private int chunk;
@@ -56,7 +56,7 @@ public class HubnessAuthority implements Runnable {
     private AtomicDouble SHub;
     private AtomicDouble SAuth;
 
-    private HubnessAuthority(WeightedGraph g,
+    private Leadership(WeightedGraph g,
             CountDownLatch authority, CountDownLatch hubness, CountDownLatch normalizationStep,
             double[] countHub, double[] countAuth,
             AtomicDouble SHub, AtomicDouble SAuth,
@@ -139,7 +139,7 @@ public class HubnessAuthority implements Runnable {
         }
     }
 
-    public static ArrayList<ArrayList<DoubleValues>> compute(final WeightedGraph g, double sigma, int runner) {
+    public static ArrayList<DoubleValues> compute(final WeightedGraph g, double sigma, int runner) {
         long time = System.currentTimeMillis();
         double[] hub = new double[g.size];
         double[] auth = new double[g.size];
@@ -169,7 +169,7 @@ public class HubnessAuthority implements Runnable {
 
             Thread[] workers = new Thread[runner];
             for (int i = 0; i < runner; i++) {
-                workers[i] = new Thread(new HubnessAuthority(g, authority, hubness, normalizationStep, hub, auth, SHub, SAuth, i, runner),"" + i);
+                workers[i] = new Thread(new Leadership(g, authority, hubness, normalizationStep, hub, auth, SHub, SAuth, i, runner),"" + i);
                 workers[i].start();
             }
 
@@ -181,25 +181,19 @@ public class HubnessAuthority implements Runnable {
             count++;
         } while (ArraysUtil.L1(ArraysUtil.sub(oldAuth, auth)) > sigma); //Repeat until reach the desiderd precision.
 
-        ArrayList<DoubleValues> listAuth = new ArrayList<DoubleValues>();
-        ArrayList<DoubleValues> listHub = new ArrayList<DoubleValues>();
-
+        ArrayList<DoubleValues> leader = new ArrayList<DoubleValues>();
+        
         //Create ranking lists for Hubness & Authority
         for (int i = 0; i < auth.length; i++) {
             if (g.in[i] != null || g.out[i] != null) {
-                listAuth.add(new DoubleValues(i, auth[i]));
-                listHub.add(new DoubleValues(i, hub[i]));
+                leader.add(new DoubleValues(i, ( auth[i] + hub[i] )/2.0d ));
             }
         }
 
-        Collections.sort(listAuth);
-        Collections.sort(listHub);
-
-        ArrayList<ArrayList<DoubleValues>> list = new ArrayList<ArrayList<DoubleValues>>();
-        list.add(new ArrayList(listAuth));
-        list.add(new ArrayList(listHub));
+        Collections.sort(leader);
+        
 
         logger.trace(((System.currentTimeMillis() - time) / 1000d) + "s\t"+count);
-        return list;
+        return leader;
     }
 }

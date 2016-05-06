@@ -94,7 +94,7 @@ public class GraphInfo implements Runnable {
         }
 
         values[0].set(vertexs.length);
-        values[2].set((values[0].get()) / (values[1].get() * (values[1].get() - 1)));
+        values[2].set((values[1].get()) / (values[0].get() * (values[0].get() - 1)));
 
         logger.info(((System.currentTimeMillis() - time) / 1000d) + "s");
         return values;
