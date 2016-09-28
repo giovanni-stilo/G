@@ -21,10 +21,8 @@ package it.stilo.g.util;
  * <https://www.gnu.org/licenses/lgpl-3.0.txt>.
  * #L%
  */
-import it.stilo.g.structures.WeightedGraph;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Set;
 
 /**
  *

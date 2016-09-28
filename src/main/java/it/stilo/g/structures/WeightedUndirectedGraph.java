@@ -142,6 +142,8 @@ public class WeightedUndirectedGraph extends WeightedGraph {
                 return false;
             }
             int i = Arrays.binarySearch(out[a], b);
+            if(i<0)
+                return false;
             weights[a][i] = w;
         }
         synchronized (rows[b]) {

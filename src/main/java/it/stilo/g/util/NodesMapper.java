@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package it.stilo.g.structures;
+package it.stilo.g.util;
 
 /*
  * #%L
@@ -27,32 +27,39 @@ package it.stilo.g.structures;
  * #L%
  */
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import gnu.trove.map.hash.TIntObjectHashMap;
+import gnu.trove.map.hash.TObjectIntHashMap;
 
 /**
  *
  * @author stilo
  */
-public class ObjectValues implements Comparable {
+public class NodesMapper<T> {
 
-    private static final Logger logger = LogManager.getLogger(ObjectValues.class);
+    private int last = 0;
+    private TObjectIntHashMap<T> nodesIds = new TObjectIntHashMap<T>();
+    private TIntObjectHashMap<T> idsObjects = new TIntObjectHashMap<T>();
 
-    public Object term;
-    public int value;
-    
-    public ObjectValues(Object term, int  value) {
-        this.term = term;
-        this.value = value;       
+    public synchronized void reset() {
+        last = 0;
+        nodesIds.clear();
+        idsObjects.clear();
     }
 
-    @Override
-    public boolean equals(Object o) {
-        return (value == ((ObjectValues) o).value);
+    public synchronized T getNode(int i) {
+        return idsObjects.get(i);
     }
 
-    public int compareTo(Object o) {
-        return Integer.compare(((ObjectValues) o).value,value);        
-    }
+    public synchronized int getId(T obj) {
+        Integer i = null;
+        if ((i = nodesIds.get(obj)) != 0) {
+            return i;
+        } else {
+            last++;
+            nodesIds.put(obj, last);
+            idsObjects.put(last, obj);
+        }
 
+        return last;
+    }
 }

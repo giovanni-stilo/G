@@ -137,6 +137,8 @@ public class WeightedDirectedGraph extends WeightedGraph {
             }
 
             int i = Arrays.binarySearch(out[a], b);
+            if(i<0)
+                return false;
             weights[a][i] = w;
         }
 

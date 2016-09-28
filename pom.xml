@@ -4,7 +4,7 @@
 
     <groupId>it.stilo</groupId>
     <artifactId>G</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.0-PUBLIC</version>
     <packaging>jar</packaging>
 
     <name>G-github</name>
