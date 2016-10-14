@@ -34,7 +34,7 @@ import org.apache.logging.log4j.Logger;
  *
  * @author Di Tommaso, Stilo
  */
-public class KppNeg {
+public class KppNeg { 
 
     private static final Logger logger = LogManager.getLogger(KppNeg.class);
 
