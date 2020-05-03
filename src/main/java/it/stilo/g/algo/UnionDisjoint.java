@@ -120,7 +120,8 @@ public class UnionDisjoint implements Runnable {
 
         Thread[] workers = new Thread[runner];
         for (int i = 0; i < runner; i++) {
-            workers[i] = new Thread(new UnionDisjoint(a,null,c, latch, i, runner));
+            workers[i] = new Thread(new Clone(a,c, latch, i, runner));
+            //workers[i] = new Thread(new UnionDisjoint(a,null,c, latch, i, runner));
             workers[i].setName("" + i);
             workers[i].start();
         }
